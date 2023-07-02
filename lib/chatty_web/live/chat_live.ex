@@ -1,6 +1,7 @@
 defmodule ChattyWeb.ChatLive do
   use ChattyWeb, :live_view
 
+  # FIXME: change to specific room
   @topic "chat"
 
   def mount(_params, _session, socket) do
@@ -17,20 +18,35 @@ defmodule ChattyWeb.ChatLive do
     {:ok, socket}
   end
 
-  def handle_info(%{event: "message", payload: message}, socket) do
+  # TODO: handle empty messages list
+
+  def handle_info(%{event: "message", payload: message}, %{assigns: %{messages: []}} = socket) do
     IO.puts("New message from #{message.name} -> #{inspect(message.text)}")
-    {:noreply, assign(socket, messages: socket.assigns.messages ++ [message])}
+    {:noreply, assign(socket, messages: [[message]])}
   end
 
-  def handle_event("change", %{"text" => value}, socket) do
-    socket = assign(socket, :text_value, value)
-    {:noreply, socket}
+  def handle_info(%{event: "message", payload: message}, socket) do
+    username = socket.assigns.username
+    [last_message | rest] = socket.assigns.messages
+
+    case last_message do
+      [%{name: ^username} = head | tail] ->
+        {:noreply, assign(socket, messages: [[[message, head] ++ tail], rest])}
+
+      _ ->
+        {:noreply, assign(socket, messages: [message] ++ socket.assigns.messages)}
+    end
   end
 
   def handle_event("send", %{"text" => text}, socket) do
     ChattyWeb.Endpoint.broadcast(@topic, "message", %{text: text, name: socket.assigns.username})
-    IO.inspect(socket.assigns.messages)
     socket = assign(socket, :text_value, nil)
+    {:noreply, socket}
+  end
+
+  def handle_event("change", %{"text" => value}, socket) do
+    IO.inspect(socket.assigns.messages)
+    socket = assign(socket, :text_value, value)
     {:noreply, socket}
   end
 
@@ -69,13 +85,13 @@ defmodule ChattyWeb.ChatLive do
         </div>
         <div
           id="messages"
-          class="flex flex-col space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
+          class="flex flex-col h-full justify-end space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
         >
-          <.message_stack messages={@messages} />
+          <%!-- <.message_stack messages={@messages} />
           <.message
             type={:sender}
             content="Your error message says permission denied, npm global installs must be given root privileges."
-          />
+          /> --%>
 
           <%!-- <.message_stack messages={[
             "Command was run with root privileges. I'm sure about that.",
@@ -83,7 +99,7 @@ defmodule ChattyWeb.ChatLive do
             "FYI https://askubuntu.com/a/700266/510172",
             "Check the line above (it ends with a # so, I'm running it as root ) <pre># npm install -g @vue/devtools</pre>"
           ]} /> --%>
-          <div class="chat-message">
+          <%!-- <div class="chat-message">
             <div class="flex items-end justify-end">
               <div class="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-1 items-end">
                 <div>
@@ -198,12 +214,12 @@ defmodule ChattyWeb.ChatLive do
                 class="w-6 h-6 rounded-full order-1"
               />
             </div>
-          </div>
+          </div> --%>
         </div>
 
         <div class="flex items-center border-t py-4 px-2">
           <div>
-            <button class="inline-flex hover:bg-indigo-50 rounded-full p-2" type="button">
+            <button class="inline-flex hover:bg-indigo-50 rounded-full pl-2" type="button">
               <.icon name="hero-paper-clip-solid" class="w-6 h-6 mx-auto bg-stone-600" />
             </button>
           </div>
@@ -216,28 +232,10 @@ defmodule ChattyWeb.ChatLive do
               value={@text_value}
               class="w-full rounded-xl border border-gray-300 focus:border-blue-300 mx-4"
             />
-            <button type="submit" class="inline-flex hover:bg-indigo-50 rounded-full p-2">
+            <button type="submit" class="inline-flex hover:bg-indigo-50 rounded-full pr-2">
               <.icon name="hero-paper-airplane-solid" class="w-6 h-6 mx-auto bg-stone-600" />
             </button>
           </form>
-          <%!-- <.form for={@form} multipart phx-change="change_message">
-              <input
-                autofocus
-                class="w-full rounded-xl border border-gray-300 focus:border-blue-300"
-                type="text"
-                id={@field.id}
-                name={@field.name}
-                value={@field.value}
-                placeholder="Write something.."
-              />
-              <button
-                type="submit"
-                class="inline-flex hover:bg-indigo-50 rounded-full p-2"
-                type="button"
-              >
-                <.icon name="hero-paper-airplane-solid" class="w-6 h-6 mx-auto bg-stone-600" />
-              </button>
-            </.form> --%>
         </div>
       </div>
     </main>
@@ -245,21 +243,21 @@ defmodule ChattyWeb.ChatLive do
   end
 
   attr(:type, :atom, required: true)
-  attr(:is_last_message?, :boolean, default: false)
   attr(:content, :string, required: true)
+  attr(:show_avatar?, :boolean, default: false)
 
   def message(%{type: :receiver} = assigns) do
     ~H"""
     <div>
-      <%= if @is_last_message? do %>
-        <span class="px-4 py-2 mx-2 rounded-lg inline-block rounded-bl-none text-sm bg-gray-200 text-gray-600">
-          <%= @content %>
-        </span>
-      <% else %>
-        <span class="px-4 py-2 mx-2 rounded-lg inline-block text-sm bg-gray-200 text-gray-600">
-          <%= @content %>
-        </span>
-      <% end %>
+      <%!-- <%= if @is_last_message? do %> --%>
+      <%!-- <span class="px-4 py-2 mx-2 rounded-lg inline-block rounded-bl-none text-sm bg-gray-200 text-gray-600"> --%>
+      <%!-- <%= @content %> --%>
+      <%!-- </span> --%>
+      <%!-- <% else %> --%>
+      <span class="px-4 py-2 mx-2 rounded-lg inline-block text-sm bg-gray-200 text-gray-600">
+        <%= @content %>
+      </span>
+      <%!-- <% end %> --%>
     </div>
     """
   end
@@ -286,11 +284,7 @@ defmodule ChattyWeb.ChatLive do
       <div class="flex flex-col space-y-2 text-xs max-w-xs mx-1 order-2 items-start">
         <%= for {msg, i} <- Enum.with_index(@messages) do %>
           <% IO.puts("msg: #{inspect(msg)}") %>
-          <.message
-            type={:receiver}
-            content={msg.text}
-            is_last_message?={i === length(@messages) - 1}
-          />
+          <.message type={:receiver} content={msg.text} show_avatar?={i === length(@messages) - 1} />
         <% end %>
 
         <%!-- <.message
