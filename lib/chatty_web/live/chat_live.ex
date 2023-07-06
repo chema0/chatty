@@ -21,20 +21,21 @@ defmodule ChattyWeb.ChatLive do
   # TODO: handle empty messages list
 
   def handle_info(%{event: "message", payload: message}, %{assigns: %{messages: []}} = socket) do
-    IO.puts("New message from #{message.name} -> #{inspect(message.text)}")
     {:noreply, assign(socket, messages: [[message]])}
   end
 
   def handle_info(%{event: "message", payload: message}, socket) do
-    username = socket.assigns.username
+    username = message.name
     [last_message | rest] = socket.assigns.messages
 
+    IO.puts("current messages (#{socket.assigns.username}): #{inspect(socket.assigns.messages)}")
+
     case last_message do
-      [%{name: ^username} = head | tail] ->
-        {:noreply, assign(socket, messages: [[[message, head] ++ tail], rest])}
+      [%{name: ^username} = _ | _] ->
+        {:noreply, assign(socket, messages: [[message | last_message] | rest])}
 
       _ ->
-        {:noreply, assign(socket, messages: [message] ++ socket.assigns.messages)}
+        {:noreply, assign(socket, messages: [[message] | socket.assigns.messages])}
     end
   end
 
@@ -45,7 +46,6 @@ defmodule ChattyWeb.ChatLive do
   end
 
   def handle_event("change", %{"text" => value}, socket) do
-    IO.inspect(socket.assigns.messages)
     socket = assign(socket, :text_value, value)
     {:noreply, socket}
   end
@@ -87,6 +87,12 @@ defmodule ChattyWeb.ChatLive do
           id="messages"
           class="flex flex-col h-full justify-end space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
         >
+          <%= for {user_messages, i} <- Enum.with_index(@messages) do %>
+            <%!-- <% IO.puts("msg: #{inspect(msg)}") %> --%>
+            <%!-- <.message type={:receiver} content={msg.text} show_avatar?={i === length(@messages) - 1} /> --%>
+            <.message_stack messages={user_messages} />
+          <% end %>
+
           <%!-- <.message_stack messages={@messages} />
           <.message
             type={:sender}
@@ -282,7 +288,7 @@ defmodule ChattyWeb.ChatLive do
     ~H"""
     <div class="flex items-end">
       <div class="flex flex-col space-y-2 text-xs max-w-xs mx-1 order-2 items-start">
-        <%= for {msg, i} <- Enum.with_index(@messages) do %>
+        <%= for {msg, i} <- @messages |> Enum.reverse |> Enum.with_index do %>
           <% IO.puts("msg: #{inspect(msg)}") %>
           <.message type={:receiver} content={msg.text} show_avatar?={i === length(@messages) - 1} />
         <% end %>
