@@ -1,4 +1,5 @@
 defmodule ChattyWeb.Router do
+  alias ChattyWeb.ChatLive
   use ChattyWeb, :router
 
   pipeline :browser do
@@ -17,10 +18,8 @@ defmodule ChattyWeb.Router do
   scope "/", ChattyWeb do
     pipe_through :browser
 
-
     # get "/", PageController, :home
     live "/", HomeLive, :home
-    live "/chat", ChatLive, :index
   end
 
   # Other scopes may use custom stacks.
@@ -42,6 +41,15 @@ defmodule ChattyWeb.Router do
 
       live_dashboard "/dashboard", metrics: ChattyWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+
+  scope "/", ChattyWeb do
+    pipe_through [:browser]
+
+    live_session :chats,
+      layout: {ChattyWeb.Layouts, :app} do
+      live "/chats/:id", ChatLive.Root, :show
     end
   end
 end
