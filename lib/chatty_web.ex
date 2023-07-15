@@ -52,7 +52,8 @@ defmodule ChattyWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {ChattyWeb.Layouts, :app}
+        layout: {ChattyWeb.Layouts, :app},
+        container: {:div, class: "liveview-container"}
 
       unquote(html_helpers())
     end
