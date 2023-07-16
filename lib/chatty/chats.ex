@@ -4,6 +4,7 @@ defmodule Chatty.Chats do
   """
 
   import Ecto.Query, warn: false
+  alias Chatty.Chats.Message
   alias Chatty.Repo
 
   alias Chatty.Chats.Chat
@@ -36,6 +37,16 @@ defmodule Chatty.Chats do
 
   """
   def get_chat!(id), do: Repo.get!(Chat, id)
+
+  def get_message!(id) do
+    Repo.get(Message, id)
+  end
+
+  def last_messages_for(chat_id) do
+    Message.Query.for_chat(chat_id)
+    |> Repo.all()
+    |> Repo.preload(:sender)
+  end
 
   @doc """
   Creates a chat.
@@ -100,5 +111,11 @@ defmodule Chatty.Chats do
   """
   def change_chat(%Chat{} = chat, attrs \\ %{}) do
     Chat.changeset(chat, attrs)
+  end
+
+  def create_message(attrs \\ %{}) do
+    %Message{}
+    |> Message.changeset(attrs)
+    |> Repo.insert()
   end
 end

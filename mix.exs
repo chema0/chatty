@@ -51,6 +51,7 @@ defmodule Chatty.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
+      {:faker, "~> 0.17", only: [:dev, :test]}
     ]
   end
 

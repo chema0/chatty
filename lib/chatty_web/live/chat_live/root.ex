@@ -4,31 +4,17 @@ defmodule ChattyWeb.ChatLive.Root do
   alias ChattyWeb.Endpoint
   alias ChattyWeb.ChatLive.Messages
 
-  # def mount(_params, _session, socket) do
-  #   if connected?(socket) do
-  #     ChattyWeb.Endpoint.subscribe(@topic)
-  #   end
-
-  #   socket =
-  #     socket
-  #     |> assign(username: username())
-  #     |> assign(messages: [])
-  #     |> assign(:text_value, nil)
-
-  #   {:ok, socket}
-  # end
-
   def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(username: username())
-     |> assign(:text_value, nil)}
+    {:ok, assign(socket, :text_value, nil)}
   end
 
   def handle_params(%{"id" => id}, _uri, %{assigns: %{live_action: :show}} = socket) do
     if connected?(socket), do: Endpoint.subscribe("chat:#{id}")
 
-    {:noreply, socket |> assign_active_chat(id) |> IO.inspect()}
+    {:noreply,
+     socket
+     |> assign_active_chat(id)
+     |> assign_active_chat_messages()}
   end
 
   def handle_info(
@@ -39,8 +25,8 @@ defmodule ChattyWeb.ChatLive.Root do
   end
 
   def handle_info(%{event: "message", payload: message}, socket) do
-    username = message.name
-    [last_message | rest] = socket.assigns.chat.messages
+    # username = message.name
+    # [last_message | rest] = socket.assigns.chat.messages
 
     # case last_message do
     #   [%{name: ^username} = _ | _] ->
@@ -74,10 +60,6 @@ defmodule ChattyWeb.ChatLive.Root do
     {:noreply, socket}
   end
 
-  defp username do
-    "User #{:rand.uniform(100)}"
-  end
-
   def render(assigns) do
     ~H"""
     <div class="h-full flex-1 p:2 justify-between flex flex-col">
@@ -89,7 +71,7 @@ defmodule ChattyWeb.ChatLive.Root do
             class="w-10 h-10 rounded-full"
           />
           <div class="flex flex-col leading-tight">
-            <span class="text-gray-700 mr-3"><%= @username %></span>
+            <span class="text-gray-700 mr-3"><%= @current_user.email %></span>
             <span class="text-sm text-gray-600">Last seen today at 22:20</span>
           </div>
         </div>
@@ -99,7 +81,7 @@ defmodule ChattyWeb.ChatLive.Root do
           </button>
         </div>
       </div>
-      <Messages.list_messages username={@username} messages={@messages} />
+      <Messages.list_messages user={@current_user} messages={@streams.messages} />
 
       <div class="flex items-center border-t py-4 px-2">
         <button class="hover:bg-indigo-50 rounded-full ml-2" type="button">
@@ -131,5 +113,49 @@ defmodule ChattyWeb.ChatLive.Root do
 
   defp assign_active_chat(socket, id) do
     assign(socket, :chat, Chats.get_chat!(id))
+  end
+
+  defp assign_active_chat_messages(socket) do
+    messages = Chats.last_messages_for(socket.assigns.chat.id)
+
+    oldest_message_id =
+      case List.first(messages) do
+        nil -> nil
+        msg -> msg.id
+      end
+
+    socket
+    # |> stream(:messages, messages)
+    |> stream_configure(:messages, dom_id: &"messages-#{:rand.uniform(1000 + length(&1))}")
+    |> stream(
+      :messages,
+      stack_messages(messages)
+    )
+    |> assign(:oldest_message_id, oldest_message_id)
+  end
+
+  defp stack_messages([]), do: []
+
+  defp stack_messages(messages) do
+    chunk_fun = fn message, acc ->
+      case acc do
+        [] ->
+          {:cont, [message]}
+
+        [last_message | _] ->
+          if message.sender_id == last_message.sender_id do
+            {:cont, [message | acc]}
+          else
+            {:cont, acc, [message]}
+          end
+      end
+    end
+
+    after_fun = fn
+      [] -> {:cont, []}
+      acc -> {:cont, acc, []}
+    end
+
+    Enum.chunk_while(messages, [], chunk_fun, after_fun)
   end
 end

@@ -5,13 +5,14 @@ defmodule Chatty.Chats.Message.Query do
   def base, do: Message
 
   # def for_chat(query \\ base(), chat_id) do
-  def for_chat(chat_id) do
-    from m in "messages",
-      where: m.chat_id == ^chat_id,
-      select: m
+  def for_chat(query \\ base(), chat_id) do
+    query
+    |> where([m], m.chat_id == ^chat_id)
+    |> order_by([m], {:desc, m.inserted_at})
 
-    # query
-    # |> where([m], m.chat_id == ^chat_id)
-    # |> order_by()
+    # TODO: add limit
+    # |> limit(10)
+    # |> subquery()
+    # |> order_by([m], {:asc, m.inserted_at})
   end
 end

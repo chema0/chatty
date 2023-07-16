@@ -1,17 +1,15 @@
 defmodule ChattyWeb.ChatLive.Messages do
+  alias Chatty.Accounts.User
   use ChattyWeb, :html
 
-  attr(:username, :string, required: true)
+  attr(:user, User, required: true)
   attr(:messages, :list, default: [])
 
   def list_messages(assigns) do
     ~H"""
     <div class="flex flex-col-reverse h-full space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch">
-      <%= for {user_messages, _} <- Enum.with_index(@messages) do %>
-        <.messages_stack
-          messages={user_messages}
-          type={sender_or_recipient(user_messages, @username)}
-        />
+      <%= for {_, user_messages} <- @messages do %>
+        <.messages_stack messages={user_messages} type={sender_or_recipient(user_messages, @user)} />
       <% end %>
     </div>
     """
@@ -27,7 +25,7 @@ defmodule ChattyWeb.ChatLive.Messages do
         <%= for {msg, i} <- @messages |> Enum.reverse |> Enum.with_index do %>
           <.message_details
             type={@type}
-            content={msg.text}
+            content={msg.content}
             is_last_message={i === length(@messages) - 1}
           />
         <% end %>
@@ -49,7 +47,7 @@ defmodule ChattyWeb.ChatLive.Messages do
           <% IO.puts("msg: #{inspect(msg)}") %>
           <.message_details
             type={@type}
-            content={msg.text}
+            content={msg.content}
             is_last_message={i === length(@messages) - 1}
           />
         <% end %>
@@ -99,7 +97,11 @@ defmodule ChattyWeb.ChatLive.Messages do
 
   defp sender_or_recipient([], _), do: :sender
 
-  defp sender_or_recipient([msg | _], username) do
-    if msg.name == username, do: :sender, else: :recipient
+  defp sender_or_recipient([message | _], user) do
+    if message.sender_id == user.id, do: :sender, else: :recipient
   end
+
+  # defp sender_or_recipient(message, user) do
+  # if message.sender_id == user.id, do: :sender, else: :recipient
+  # end
 end
