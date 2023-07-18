@@ -1,6 +1,16 @@
 defmodule ChattyWeb.ChatLive.Chat do
   use Phoenix.Component
-  alias ChattyWeb.ChatLive.{Messages, Message}
+  alias ChattyWeb.ChatLive.Messages
+  import ChattyWeb.CoreComponents
+
+  def mount(_params, _session, socket) do
+    {:ok, socket |> assign(:text_value, nil)}
+  end
+
+  def handle_event("change", %{"text" => value}, socket) do
+    socket = assign(socket, :text_value, value)
+    {:noreply, socket}
+  end
 
   def show(assigns) do
     ~H"""
@@ -23,7 +33,7 @@ defmodule ChattyWeb.ChatLive.Chat do
           </button>
         </div>
       </div>
-      <Messages.list_messages user={@current_user} messages={@streams.messages} />
+      <Messages.list_messages user={@current_user} messages={@messages} />
 
       <div class="flex items-center border-t py-4 px-2">
         <button class="hover:bg-indigo-50 rounded-full ml-2" type="button">
@@ -32,7 +42,7 @@ defmodule ChattyWeb.ChatLive.Chat do
         <form phx-change="change" phx-submit="send" class="w-full flex items-center">
           <%!-- <textarea --%>
           <%!-- rows={1} --%>
-          <input
+          <%!-- <input
             autofocus
             type="text"
             name="text"
@@ -46,7 +56,7 @@ defmodule ChattyWeb.ChatLive.Chat do
             class="hover:enabled:bg-indigo-50 rounded-full mr-2"
           >
             <.icon name="hero-paper-airplane-solid" class="w-6 h-6 mx-auto bg-stone-600" />
-          </button>
+          </button> --%>
         </form>
       </div>
     </div>

@@ -58,6 +58,7 @@ defmodule ChattyWeb.Router do
     live_session :chats,
       on_mount: [{ChattyWeb.UserAuth, :ensure_authenticated}],
       layout: {ChattyWeb.Layouts, :app} do
+      live "/chats", ChatLive.Root, :index
       live "/chats/:id", ChatLive.Root, :show
     end
   end

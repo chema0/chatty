@@ -1,1 +1,9 @@
-<%!-- <Chats.sidebar chats={@chats} chat={@chat} live_action={@live_action} /> --%>
+<div class="flex flex-row">
+  <Chats.sidebar chats={@chats} chat={@chat} live_action={@live_action} />
+  <Chat.show
+    :if={@live_action == :show}
+    messages={@streams.messages}
+    current_user={@current_user}
+    chat={@chat}
+  />
+</div>
