@@ -7,15 +7,10 @@ defmodule ChattyWeb.ChatLive.Chat do
     {:ok, socket |> assign(:text_value, nil)}
   end
 
-  def handle_event("change", %{"text" => value}, socket) do
-    socket = assign(socket, :text_value, value)
-    {:noreply, socket}
-  end
-
   def show(assigns) do
     ~H"""
     <div class="h-full flex-1 p:2 justify-between flex flex-col">
-      <div class="flex sm:items-center justify-between py-3 border-2 border-gray-200 px-4">
+      <div class="flex sm:items-center justify-between py-3 border-2 border-gray-200 border-l-0 border-r-0 px-4">
         <div class="relative flex items-center space-x-4">
           <img
             src="https://images.unsplash.com/photo-1640951613773-54706e06851d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=880&q=80"
@@ -42,7 +37,7 @@ defmodule ChattyWeb.ChatLive.Chat do
         <form phx-change="change" phx-submit="send" class="w-full flex items-center">
           <%!-- <textarea --%>
           <%!-- rows={1} --%>
-          <%!-- <input
+          <input
             autofocus
             type="text"
             name="text"
@@ -56,7 +51,7 @@ defmodule ChattyWeb.ChatLive.Chat do
             class="hover:enabled:bg-indigo-50 rounded-full mr-2"
           >
             <.icon name="hero-paper-airplane-solid" class="w-6 h-6 mx-auto bg-stone-600" />
-          </button> --%>
+          </button>
         </form>
       </div>
     </div>

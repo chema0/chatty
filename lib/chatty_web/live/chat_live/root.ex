@@ -30,6 +30,11 @@ defmodule ChattyWeb.ChatLive.Root do
   #   {:noreply, socket}
   # end
 
+  def handle_event("change", %{"text" => value}, socket) do
+    socket = assign(socket, :text_value, value)
+    {:noreply, socket}
+  end
+
   def handle_event("send", %{"text" => _text}, socket) do
     {:noreply, socket}
   end

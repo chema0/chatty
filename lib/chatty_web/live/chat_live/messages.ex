@@ -7,7 +7,7 @@ defmodule ChattyWeb.ChatLive.Messages do
 
   def list_messages(assigns) do
     ~H"""
-    <div class="flex flex-col-reverse h-full space-y-4 p-3 overflow-y-hidden scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch">
+    <div class="flex flex-col-reverse flex-1 h-full space-y-4 p-3 scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-1 scrolling-touch overflow-y-scroll">
       <%= for {_, user_messages} <- @messages do %>
         <.messages_stack messages={user_messages} type={sender_or_recipient(user_messages, @user)} />
       <% end %>

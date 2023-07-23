@@ -1,9 +1,10 @@
-<div class="flex flex-row">
+<div class="flex flex-row h-full">
   <Chats.sidebar chats={@chats} chat={@chat} live_action={@live_action} />
   <Chat.show
     :if={@live_action == :show}
     messages={@streams.messages}
     current_user={@current_user}
     chat={@chat}
+    text_value={:nil}
   />
 </div>
